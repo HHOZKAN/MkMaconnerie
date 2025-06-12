@@ -1,3 +1,15 @@
+// src/app/contact/page.tsx
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Contactez MKM Maçonnerie', // Adaptez
+  description: 'Contactez-nous pour discuter de votre projet de maçonnerie ou pour obtenir un devis gratuit. MKM Maçonnerie est à votre écoute.',
+  openGraph: {
+    title: 'Contactez MKM Maçonnerie',
+    description: 'Discutons de votre projet et obtenez un devis personnalisé.',
+  },
+};
+
 export default function ContactPage() {
   return (
     <main className="max-w-4xl mx-auto py-16 px-4">
