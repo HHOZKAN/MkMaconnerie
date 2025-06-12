@@ -14,6 +14,7 @@ export interface SanityBaseDocument {
 // SanityImageSource peut être utilisé directement depuis le package.
 export interface SanityImageReference extends Image {
   asset: Asset; // Asset contient les détails de l'image comme l'url
+  alt?: string;
 }
 
 export interface Chantier extends SanityBaseDocument {
@@ -32,6 +33,7 @@ export interface Conseil extends SanityBaseDocument {
   slug?: Slug;
   contenu?: PortableTextBlock[]; // Pour le contenu riche de Sanity
   imagePrincipale?: SanityImageReference;
+  extraitContenu?: string;
 }
 
 export interface AvisClient extends SanityBaseDocument {
