@@ -1,7 +1,7 @@
 // src/types/sanity.ts
-import type { PortableTextBlock, Slug, Image, Asset } from 'sanity';
+import type { PortableTextBlock } from '@portabletext/types';
 
-// Interface de base pour les documents Sanity (avec _id, _type, _createdAt, _updatedAt)
+// Interface de base pour les documents Sanity
 export interface SanityBaseDocument {
   _id: string;
   _type: string;
@@ -9,14 +9,51 @@ export interface SanityBaseDocument {
   _updatedAt: string;
 }
 
-// Interface pour les références d'images (simplifiée)
-// Pour une utilisation plus complète avec @sanity/image-url,
-// SanityImageSource peut être utilisé directement depuis le package.
-export interface SanityImageReference extends Image {
-  asset: Asset; // Asset contient les détails de l'image comme l'url
-  alt?: string;
+// Interface pour le slug
+export interface Slug {
+  current: string;
 }
 
+// Interface pour les métadonnées d'asset
+export interface AssetMetadata {
+  lqip?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+    aspectRatio: number;
+  };
+}
+
+// Interface pour les assets
+export interface Asset {
+  _id: string;
+  _ref?: string;
+  url?: string;
+  metadata?: AssetMetadata;
+}
+
+// Interface pour les références d'images
+export interface SanityImageReference {
+  _key?: string;
+  _type?: string;
+  asset: Asset;
+  alt?: string;
+  // Autres propriétés possibles pour les images Sanity
+  hotspot?: {
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+  };
+  crop?: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+}
+
+// Le reste de vos interfaces reste inchangé
 export interface Chantier extends SanityBaseDocument {
   _type: 'chantier';
   titre?: string;
