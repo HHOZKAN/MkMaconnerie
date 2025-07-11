@@ -1,7 +1,10 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { QuoteForm } from "@/components/QuoteForm";
 
 export const About = () => {
+  const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
   return (
     <section id="apropos" className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -9,7 +12,7 @@ export const About = () => {
           {/* Image */}
           <div>
             <img
-              src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=600&fit=crop"
+              src="/images/creer-une-entreprise-de-maconnerie.png"
               alt="Mehmet OZKAN, artisan maçon"
               className="rounded-lg shadow-lg w-full h-96 object-cover"
             />
@@ -46,12 +49,20 @@ export const About = () => {
               </div>
             </div>
 
-            <Button className="bg-amber-700 hover:bg-amber-800">
+            <Button 
+              className="bg-amber-700 hover:bg-amber-800"
+              onClick={() => setIsQuoteFormOpen(true)}
+            >
               Demander un devis
             </Button>
           </div>
         </div>
       </div>
+
+      <QuoteForm 
+        open={isQuoteFormOpen} 
+        onOpenChange={setIsQuoteFormOpen} 
+      />
     </section>
   );
 };

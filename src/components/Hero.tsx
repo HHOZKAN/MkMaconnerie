@@ -56,8 +56,9 @@ export const Hero = () => {
             {/* Image */}
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=800&h=600&fit=crop"
+                src="/images/david-ballew-0BnukiMgSK4-unsplash.jpg"
                 alt="Chantier de maçonnerie"
+
                 className="rounded-lg shadow-xl w-full h-96 object-cover"
               />
               <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-lg shadow-lg">

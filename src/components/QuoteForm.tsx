@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,19 +8,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import emailjs from "@emailjs/browser";
 
 const quoteFormSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   phone: z.string().min(10, "Veuillez entrer un numéro de téléphone valide"),
   email: z.string().email("Veuillez entrer une adresse email valide"),
-  address: z.string().min(5, "Veuillez entrer l'adresse complète du chantier"),
-  projectType: z.string().min(1, "Veuillez sélectionner le type de projet"),
-  startDate: z.string().min(1, "Veuillez indiquer une date souhaitée"),
-  services: z.array(z.string()).min(1, "Veuillez sélectionner au moins un service"),
+  address: z.string().optional(),
+  projectType: z.string().optional(),
+  startDate: z.string().optional(),
+  services: z.array(z.string()).optional(),
   description: z.string().min(10, "Veuillez décrire votre projet (minimum 10 caractères)"),
   consent: z.boolean().refine(val => val === true, {
     message: "Vous devez accepter le traitement de vos données personnelles"
@@ -47,7 +47,7 @@ const services = [
 ];
 
 export const QuoteForm = ({ open, onOpenChange }: QuoteFormProps) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<QuoteFormValues>({
@@ -66,66 +66,34 @@ export const QuoteForm = ({ open, onOpenChange }: QuoteFormProps) => {
     }
   });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Vérifier la taille du fichier (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "Fichier trop volumineux",
-          description: "La taille du fichier ne doit pas dépasser 10MB",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Vérifier le type de fichier
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Type de fichier non supporté",
-          description: "Veuillez sélectionner une image (JPEG, PNG, WebP) ou un PDF",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      setSelectedFile(file);
-    }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  };
-
   const onSubmit = async (data: QuoteFormValues) => {
     try {
-      // Simuler l'envoi du formulaire
-      console.log("Données du devis:", data);
-      console.log("Fichier joint:", selectedFile);
-      
-      // En production, ici vous feriez l'appel API pour envoyer les données
-      // const formData = new FormData();
-      // Object.keys(data).forEach(key => {
-      //   formData.append(key, data[key]);
-      // });
-      // if (selectedFile) {
-      //   formData.append('file', selectedFile);
-      // }
-      
-      toast({
-        title: "Demande envoyée avec succès !",
-        description: "Nous vous recontacterons dans les plus brefs délais pour établir votre devis."
-      });
-      
+      const templateParams = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        email: data.email,
+        address: data.address || "Non spécifiée",
+        projectType: data.projectType || "Non spécifié",
+        startDate: data.startDate || "Non spécifiée",
+        services: data.services?.join(', ') || "Non spécifiés",
+        description: data.description,
+        consent: data.consent ? "Accepté" : "Refusé",
+        fileName: "Aucun fichier joint"
+      };
+
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
       form.reset();
-      setSelectedFile(null);
       onOpenChange(false);
+      setShowSuccessDialog(true);
     } catch (error) {
+      console.error("EmailJS error:", error);
       toast({
         title: "Erreur lors de l'envoi",
         description: "Une erreur s'est produite. Veuillez réessayer ou nous contacter directement.",
@@ -135,285 +103,265 @@ export const QuoteForm = ({ open, onOpenChange }: QuoteFormProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Demander un Devis</DialogTitle>
-          <DialogDescription>
-            Remplissez ce formulaire pour recevoir un devis personnalisé pour vos travaux de maçonnerie.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Demander un Devis</DialogTitle>
+            <DialogDescription>
+              Remplissez ce formulaire pour recevoir un devis personnalisé pour vos travaux de maçonnerie.
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Informations personnelles */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prénom *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Votre prénom" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Votre nom" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="06 12 34 56 78" type="tel" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="votre@email.fr" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Informations du projet */}
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Adresse du chantier *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Adresse complète du projet" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="projectType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type de projet *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Informations personnelles */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prénom *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez le type" />
-                        </SelectTrigger>
+                        <Input placeholder="Votre prénom" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="neuf">Construction neuve</SelectItem>
-                        <SelectItem value="renovation">Rénovation</SelectItem>
-                        <SelectItem value="extension">Extension</SelectItem>
-                        <SelectItem value="reparation">Réparation</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre nom" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="06 12 34 56 78" type="tel" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="votre@email.fr" type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Informations du projet */}
               <FormField
                 control={form.control}
-                name="startDate"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date souhaitée de début *</FormLabel>
+                    <FormLabel>Adresse du chantier</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input placeholder="Adresse complète du projet" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            {/* Services */}
-            <FormField
-              control={form.control}
-              name="services"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Services demandés *</FormLabel>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    {services.map((service) => (
-                      <FormField
-                        key={service.id}
-                        control={form.control}
-                        name="services"
-                        render={({ field }) => {
-                          return (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(service.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...field.value, service.id])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== service.id
-                                          )
-                                        )
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="text-sm font-normal">
-                                {service.label}
-                              </FormLabel>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description du projet *</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Décrivez votre projet en détail : dimensions, matériaux souhaités, contraintes particulières..."
-                      rows={4}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Upload de fichier */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Pièce jointe (optionnel)
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                {selectedFile ? (
-                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                    <div className="flex items-center space-x-2">
-                      <Upload className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">{selectedFile.name}</span>
-                      <span className="text-xs text-gray-500">
-                        ({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={removeFile}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">
-                      Ajoutez des photos de votre projet ou un plan (PDF)
-                    </p>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      className="hidden"
-                      accept="image/*,.pdf"
-                      onChange={handleFileChange}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => document.getElementById('file-upload')?.click()}
-                    >
-                      Choisir un fichier
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Formats acceptés : JPEG, PNG, WebP, PDF (max 10MB)
-                    </p>
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="projectType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type de projet</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez le type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="neuf">Construction neuve</SelectItem>
+                          <SelectItem value="renovation">Rénovation</SelectItem>
+                          <SelectItem value="extension">Extension</SelectItem>
+                          <SelectItem value="reparation">Réparation</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date souhaitée de début</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
 
-            {/* Consentement RGPD */}
-            <FormField
-              control={form.control}
-              name="consent"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm">
-                      J'accepte que mes données personnelles soient traitées pour me recontacter concernant ma demande de devis *
-                    </FormLabel>
-                    <p className="text-xs text-gray-500">
-                      Vos données sont uniquement utilisées pour traiter votre demande et ne seront jamais partagées avec des tiers.
-                    </p>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Services */}
+              <FormField
+                control={form.control}
+                name="services"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Services demandés</FormLabel>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      {services.map((service) => (
+                        <FormField
+                          key={service.id}
+                          control={form.control}
+                          name="services"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(service.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), service.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== service.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {service.label}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Annuler
-              </Button>
-              <Button type="submit" className="bg-amber-700 hover:bg-amber-800">
-                Envoyer la demande
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description du projet *</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Décrivez votre projet en détail : dimensions, matériaux souhaités, contraintes particulières..."
+                        rows={4}
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Consentement RGPD */}
+              <FormField
+                control={form.control}
+                name="consent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm">
+                        J'accepte que mes données personnelles soient traitées pour me recontacter concernant ma demande de devis *
+                      </FormLabel>
+                      <p className="text-xs text-gray-500">
+                        Vos données sont uniquement utilisées pour traiter votre demande et ne seront jamais partagées avec des tiers.
+                      </p>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" className="bg-amber-700 hover:bg-amber-800">
+                  Envoyer la demande
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pop-up de succès avec information sur l'envoi de documents */}
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Demande envoyée avec succès !</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>Nous vous recontacterons dans les plus brefs délais pour établir votre devis.</p>
+              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                <p className="font-medium text-amber-800 mb-2">📎 Avez-vous des documents à nous envoyer ?</p>
+                <p className="text-sm text-amber-700">
+                  Si vous souhaitez nous faire parvenir des photos, plans ou autres documents concernant votre projet, 
+                  vous pouvez les envoyer directement par email à :
+                </p>
+                <p className="font-mono text-sm bg-white p-2 rounded mt-2 border">
+                  mkmaconnerie01@gmail.com
+                </p>
+                <p className="text-xs text-amber-600 mt-2">
+                  N'oubliez pas de mentionner votre nom dans l'objet de l'email.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowSuccessDialog(false)}>
+              Compris
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

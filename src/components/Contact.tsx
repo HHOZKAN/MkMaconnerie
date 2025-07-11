@@ -1,14 +1,70 @@
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { QuoteForm } from "@/components/QuoteForm";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import emailjs from "@emailjs/browser";
+
+const contactFormSchema = z.object({
+  lastName: z.string().min(2, "Le nom est requis"),
+  firstName: z.string().min(2, "Le prénom est requis"),
+  phone: z.string().min(10, "Le téléphone est requis"),
+  email: z.string().email("L'email est requis"),
+  projectType: z.string().optional(),
+  budget: z.string().optional(),
+  description: z.string().min(10, "Veuillez décrire votre projet"),
+});
+
+type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export const Contact = () => {
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      lastName: "",
+      firstName: "",
+      phone: "",
+      email: "",
+      projectType: "",
+      budget: "",
+      description: "",
+    },
+  });
+
+  const onSubmit = async (data: ContactFormValues) => {
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID, // Using the same template for now
+        data,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      toast({
+        title: "Demande envoyée avec succès !",
+        description: "Nous vous recontacterons bientôt.",
+      });
+      form.reset();
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      toast({
+        title: "Erreur lors de l'envoi",
+        description: "Une erreur s'est produite. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <section id="contact" className="py-20 bg-gray-50">
@@ -34,19 +90,23 @@ export const Contact = () => {
             <CardHeader>
               <CardTitle>Contact Rapide</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input placeholder="Nom" />
-                <Input placeholder="Prénom" />
-              </div>
-              <Input placeholder="Téléphone" type="tel" />
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Type de projet" />
-              <Input placeholder="Budget estimé" />
-              <Textarea placeholder="Décrivez votre projet..." rows={4} />
-              <Button className="w-full bg-amber-700 hover:bg-amber-800">
-                Envoyer la demande
-              </Button>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="lastName" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Nom" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="firstName" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Prénom" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  </div>
+                  <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Téléphone" type="tel" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="email" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Email" type="email" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="projectType" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Type de projet (optionnel)" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="budget" render={({ field }) => ( <FormItem><FormControl><Input placeholder="Budget estimé (optionnel)" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormControl><Textarea placeholder="Décrivez votre projet..." rows={4} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <Button type="submit" className="w-full bg-amber-700 hover:bg-amber-800">
+                    Envoyer la demande
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 
@@ -74,7 +134,7 @@ export const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Téléphone</h3>
                     <a href="tel:+33123456789" className="text-amber-700 hover:underline">
-                      06 12 34 56 78
+                      06 99 91 86 88
                     </a>
                   </div>
                 </div>
@@ -88,7 +148,7 @@ export const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-1">Email</h3>
                     <a href="mailto:contact@mk-maconnerie.fr" className="text-amber-700 hover:underline">
-                      contact@mk-maconnerie.fr
+                      mkmaconnerie01@gmail.com
                     </a>
                   </div>
                 </div>

@@ -47,13 +47,13 @@ export const Footer = () => {
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-amber-700" />
                 <a href="tel:+33123456789" className="text-gray-400 hover:text-white">
-                  06 12 34 56 78
+                  06 99 91 86 88
                 </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-amber-700" />
                 <a href="mailto:contact@mk-maconnerie.fr" className="text-gray-400 hover:text-white">
-                  contact@mk-maconnerie.fr
+                  mkmaconnerie01@gmail.com
                 </a>
               </div>
             </div>
@@ -62,7 +62,7 @@ export const Footer = () => {
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            © 2024 MK Maçonnerie - Tous droits réservés | SIRET: 123 456 789 00012
+            © 2024 MK Maçonnerie - Tous droits réservés | SIRET: 791 292 865 00023
           </p>
         </div>
       </div>

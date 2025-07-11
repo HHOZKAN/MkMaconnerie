@@ -6,68 +6,63 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Filter } from "lucide-react";
+import { QuoteForm } from "@/components/QuoteForm";
+import { Link } from "react-router-dom";
 
 const Realisations = () => {
   const [activeFilter, setActiveFilter] = useState("Tous");
+  const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
 
   const filters = ["Tous", "Fondations", "Murs", "Terrasses", "Escaliers", "Rénovation", "Crépis"];
 
   const projects = [
     {
       id: 1,
-      title: "Construction mur de soutènement",
-      category: "Murs",
-      image: "https://images.unsplash.com/photo-1487887235947-a955ef187fcc?w=800&h=600&fit=crop",
-      description: "Mur de soutènement en béton armé pour stabilisation de terrain",
+      title: "Escaliers",
+      category: "Escaliers",
+      image: "images/escaliers.jpg",
+      description: "Construction d'un escaliers solide et durable.",
       location: "Bourg-en-Bresse",
       year: "2024"
     },
     {
       id: 2,
-      title: "Fondations maison individuelle",
+      title: "Piscine",
       category: "Fondations",
-      image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=800&h=600&fit=crop",
-      description: "Fondations en béton armé pour construction neuve",
+      image: "/images/Piscinecreuse.jpg",
+      description: "Construction d'une piscine creusé",
       location: "Péronnas",
       year: "2024"
     },
     {
       id: 3,
-      title: "Terrasse en béton désactivé",
-      category: "Terrasses",
-      image: "https://images.unsplash.com/photo-1494891848038-7bd202a2afeb?w=800&h=600&fit=crop",
-      description: "Terrasse décorative avec finition béton désactivé",
+      title: "Fondations",
+      category: "Fondations",
+      image: "/images/Fondations.jpg",
+      description: "Coulage de fondations d'une maison",
       location: "Viriat",
       year: "2023"
     },
     {
       id: 4,
-      title: "Escalier extérieur en béton",
-      category: "Escaliers",
-      image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=800&h=600&fit=crop",
-      description: "Escalier d'accès extérieur avec rampe intégrée",
+      title: "Constructions de murs",
+      category: "Murs",
+      image: "/images/Murs en brique.jpg",
+      description: "Constructions de murs en brique",
       location: "Bourg-en-Bresse",
       year: "2023"
     },
     {
-      id: 5,
-      title: "Rénovation façade ancienne",
-      category: "Rénovation",
-      image: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=600&fit=crop",
-      description: "Rénovation complète de façade avec isolation",
-      location: "Montrevel-en-Bresse",
+      id: 4,
+      title: "Chainage et isolation",
+      category: "Fondations",
+      image: "/images/Chainageisolation.jpg",
+      description: "Pose de chainage et isolation",
+      location: "Bourg-en-Bresse",
       year: "2023"
-    },
-    {
-      id: 6,
-      title: "Crépis façade moderne",
-      category: "Crépis",
-      image: "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?w=800&h=600&fit=crop",
-      description: "Application crépis décoratif sur façade contemporaine",
-      location: "Ceyzériat",
-      year: "2024"
     }
   ];
+
 
   const filteredProjects = activeFilter === "Tous" 
     ? projects 
@@ -174,17 +169,27 @@ const Realisations = () => {
             Devis gratuit et conseils personnalisés.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="outline" className="bg-white text-amber-700 hover:bg-gray-50">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="bg-white text-amber-700 hover:bg-gray-50"
+              onClick={() => setIsQuoteFormOpen(true)}
+            >
               Demander un devis
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-amber-700">
-              Nous contacter
+            <Button asChild size="lg" variant="outline" className="border-white text-orange hover:bg-white hover:text-amber-700">
+              <Link to="/#contact">Nous contacter</Link>
             </Button>
           </div>
         </div>
       </section>
 
       <Footer />
+
+      <QuoteForm 
+        open={isQuoteFormOpen} 
+        onOpenChange={setIsQuoteFormOpen} 
+      />
     </div>
   );
 };
