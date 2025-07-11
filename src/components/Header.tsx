@@ -110,7 +110,7 @@ export const Header = () => {
                 <div className="flex flex-col space-y-2 pt-3">
                   <a href="tel:+33123456789" className="flex items-center space-x-2 text-amber-700">
                     <Phone className="w-4 h-4" />
-                    <span className="font-medium">06 12 34 56 78</span>
+                    <span className="font-medium">06 99 91 86 88</span>
                   </a>
                   <Button 
                     onClick={() => setIsQuoteFormOpen(true)}
